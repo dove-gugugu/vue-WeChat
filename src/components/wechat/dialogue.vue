@@ -19,7 +19,7 @@
       </div>
     </header>
     <section class="dialogue-section clearfix" v-on:click="MenuOutsideClick">
-添加      <!--      双方聊天信息显示-->
+      <!--      双方聊天信息显示-->
       <div class="clearfix" v-for="(item,index) in msgInfo.msg" :key="index">
         <div :class="[item.name === 'myself' ? 'myRow clearfix' : 'row clearfix']">
           <img :src="item.headerUrl" class="header">
@@ -65,10 +65,10 @@
         </div>
         <!--        笑脸-->
         <span class="expression iconfont icon-dialogue-smile"></span>
-        <!--        上传图片 TODO 这两个放在一起会导致加号图片无法与笑脸对齐 暂时没想出来怎么改-->
-        <span v-if="isInputNull" style="width: auto; height: auto">
+        <!--        上传图片-->
+        <span v-if="isInputNull">
           <input type="file" class="more iconfont icon-dialogue-jia" @change="upImg"
-                 style="opacity: 0; margin-right: -50%">
+                 style="opacity: 0; margin-right: -50%; margin-top: -10%">
           <span class="more iconfont icon-dialogue-jia"></span>
         </span>
         <!--        <span v-if="isInputNull" @click="upImg" class="more iconfont icon-dialogue-jia"></span>-->
@@ -103,6 +103,7 @@
 </template>
 <script>
 // import contact from "@/vuex/contacts";
+import myselfHeadIcon from "../../assets/images/header/滑稽头像.jpg";
 
 export default {
   data() {
@@ -110,6 +111,8 @@ export default {
       // 输入框聊天内容
       inputChat: '',
       pageName: this.$route.query.name,
+      // 回复数
+      replyNum: 0,
       imgList: [],
       imgData: {
         accept: 'image/gif, image/jpeg, image/png, image/jpg',
@@ -125,6 +128,15 @@ export default {
     })
   },
   computed: {
+    replyMsgList() {
+      for (let i in this.$store.state.replyMsgList) {
+        // 不要将==改为===
+        if (this.$store.state.replyMsgList[i].mid == this.$route.query.mid) {
+          return this.$store.state.replyMsgList[i].msgInfo.msg
+        }
+      }
+      return []
+    },
     msgInfo() {
       for (let i in this.$store.state.msgList.baseMsg) {
         // 不要将==改为===
@@ -233,20 +245,25 @@ export default {
       }
       this.msgInfo.msg.push({
         "text": this.inputChat,
-        "date": 1488117964495,
+        "date": new Date(),
         "name": "myself",
-        "headerUrl": "https://sinacloud.net/vue-wechat/images/headers/header01.png"
+        "headerUrl": myselfHeadIcon
       })
       this.inputChat = ''
     },
     // 提交他人聊天-测试用
     submitOtherChat() {
-      this.msgInfo.msg.push({ //对话框的聊天记录 新消息 push 进
-        "text": this.inputChat,
-        "date": 1488117964495,
-        "name": "阿荡",
-        "headerUrl": "https://sinacloud.net/vue-wechat/images/headers/header01.png"
-      })
+      if(this.isInputNull) {
+        this.msgInfo.msg.push(this.replyMsgList[this.replyNum])
+        this.replyNum++
+      }else {
+        this.msgInfo.msg.push({ //对话框的聊天记录 新消息 push 进
+          "text": this.inputChat,
+          "date": new Date(),
+          "name": "阿荡",
+          "headerUrl": "https://sinacloud.net/vue-wechat/images/headers/header01.png"
+        })
+      }
       this.inputChat = ''
     },
     // 上传图片
@@ -264,7 +281,7 @@ export default {
 
       this.msgInfo.msg.push({
         "name": "myself",
-        "headerUrl": "https://sinacloud.net/vue-wechat/images/headers/header01.png",
+        "headerUrl": myselfHeadIcon,
         // 使用require防止webpack编译后地址找不到
         "imgUrl": url
       })
